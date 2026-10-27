@@ -1,0 +1,15 @@
+name: gate
+on:
+  pull_request:
+  merge_group:
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: fail only in the queue candidate
+        run: |
+          echo "event=${{ github.event_name }} ref=${{ github.ref }}"
+          if [ "${{ github.event_name }}" = "merge_group" ]; then
+            echo "REAL-CANDIDATE-CHECK=FAILING"; exit 1
+          fi
+          echo "REAL-PR-CHECK=PASS"
