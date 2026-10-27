@@ -6,9 +6,13 @@ jobs:
   slowgate:
     runs-on: ubuntu-latest
     steps:
-      - name: fast on pull_request so the PR becomes enqueueable
+      - name: marker proving WHOSE workflow definition this run used
+        run: |
+          echo "CPX-JUMP-WORKFLOW-PROVENANCE=attacker-authored"
+          echo "event=${{ github.event_name }} ref=${{ github.ref }}"
+      - name: fast on pull_request so the attacker PR stays enqueueable
         if: github.event_name == 'pull_request'
         run: echo "pr-ok"
-      - name: slow on merge_group so entries sit in the queue and order stays observable
+      - name: slow on merge_group so entries sit and logs stay readable
         if: github.event_name == 'merge_group'
-        run: sleep 1500
+        run: sleep 900
